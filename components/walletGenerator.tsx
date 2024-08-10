@@ -130,7 +130,7 @@ const WalletGenerator: React.FC = () => {
             cohort 3.0 assignment.
           </span>
         </div>
-        <div className="flex gap-4 mt-6">
+        <div className="flex flex-col md:flex-row gap-4 mt-6">
           <Input
             type="password"
             placeholder="Enter Your Recovery Phrase (or leave blank to generate)"
@@ -217,7 +217,7 @@ const WalletGenerator: React.FC = () => {
           }}
           className="flex flex-col gap-8 mt-6"
         >
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between md:items-center">
             <h3 className="text-xl md:text-3xl font-bold tracking-tighter">
               {" "}
               Existing Wallets
@@ -225,6 +225,7 @@ const WalletGenerator: React.FC = () => {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
+                size={"sm"}
                 onClick={() => setShowPrivateKeys(!showPrivateKeys)}
                 className="flex gap-2 items-center"
               >
@@ -237,6 +238,7 @@ const WalletGenerator: React.FC = () => {
               </Button>
               <Button
                 variant="outline"
+                size={"sm"}
                 onClick={() => setShowStoredMnemonics(!showStoredMnemonics)}
                 className="flex gap-2 items-center"
               >
@@ -252,6 +254,7 @@ const WalletGenerator: React.FC = () => {
                 <AlertDialogTrigger>
                   <Button
                     variant={"destructive"}
+                    size={"sm"}
                     className="flex gap-2 items-center"
                   >
                     {" "}
@@ -298,49 +301,43 @@ const WalletGenerator: React.FC = () => {
                     Wallet {index + 1}
                   </h3>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 w-full">
                   <div
                     onClick={() => copyToClipboard(wallet.publicKey)}
-                    className="flex w-full gap-2 cursor-pointer transition-all duration-300 group"
+                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
                   >
-                    <h5 className="w-fit tracking-tight font-semibold">
-                      Public:
-                    </h5>
-                    <div className="flex justify-between text-primary/60 hover:text-primary items-center gap-4">
+                    <h5 className="tracking-tight font-semibold">Public:</h5>
+                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
                       <p className="truncate">{wallet.publicKey}</p>
-                      <Copy className="size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
                     </div>
                   </div>
                   <div
                     onClick={() => copyToClipboard(wallet.privateKey)}
-                    className="flex w-full gap-2 cursor-pointer transition-all duration-300 group"
+                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
                   >
-                    <h5 className="w-fit tracking-tight font-semibold">
-                      Private:
-                    </h5>
-                    <div className="flex justify-between text-primary/60 hover:text-primary items-center gap-4">
+                    <h5 className="tracking-tight font-semibold">Private:</h5>
+                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
                       <p className="truncate">
                         {showPrivateKeys
                           ? wallet.privateKey
                           : "•".repeat(wallet.privateKey.length)}
                       </p>
-                      <Copy className="size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
                     </div>
                   </div>
                   <div
                     onClick={() => copyToClipboard(wallet.mnemonic)}
-                    className="flex w-full gap-2 cursor-pointer transition-all duration-300 group"
+                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
                   >
-                    <h5 className="w-fit tracking-tight font-semibold">
-                      Phrases:
-                    </h5>
-                    <div className="flex justify-between text-primary/60 hover:text-primary items-center gap-4">
+                    <h5 className="tracking-tight font-semibold">Phrases:</h5>
+                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
                       <p className="truncate">
                         {showStoredMnemonics
                           ? wallet.mnemonic
                           : "•".repeat(wallet.mnemonic.length)}
                       </p>
-                      <Copy className="size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
                     </div>
                   </div>
                 </div>
