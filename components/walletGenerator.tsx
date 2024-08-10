@@ -222,7 +222,7 @@ const WalletGenerator: React.FC = () => {
               {" "}
               Existing Wallets
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full flex-wrap">
               <Button
                 variant="outline"
                 size={"sm"}
@@ -301,7 +301,7 @@ const WalletGenerator: React.FC = () => {
                     Wallet {index + 1}
                   </h3>
                 </div>
-                <div className="flex flex-col flex-wrap gap-2 max-w-screen">
+                <div className="flex flex-col gap-2 w-full">
                   <div
                     onClick={() => copyToClipboard(wallet.publicKey)}
                     className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
