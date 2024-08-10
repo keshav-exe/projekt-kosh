@@ -9,6 +9,7 @@ import { derivePath } from "ed25519-hd-key";
 import { Keypair } from "@solana/web3.js";
 import { Input } from "./ui/input";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const WalletGenerator: React.FC = () => {
   const [mnemonicWords, setMnemonicWords] = useState<string[]>(
@@ -83,7 +84,11 @@ const WalletGenerator: React.FC = () => {
             Kosh
           </h1>
           <span className="text-lg tracking-tighter text-primary/80">
-            Your Personal Web3 Wallet.
+            A Personal Web3 Wallet For{" "}
+            <Link href={"https://x.com/kirat_tw"} className="font-medium">
+              Harkirat&apos;s
+            </Link>{" "}
+            Cohort 3.0 Assignment.
           </span>
         </div>
         <div className="flex gap-4 mt-6">
