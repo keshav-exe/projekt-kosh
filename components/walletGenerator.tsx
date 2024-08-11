@@ -1,7 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Copy, EyeOff, Eye, ChevronDown, ChevronUp, Trash } from "lucide-react";
+import {
+  Copy,
+  EyeOff,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  Trash,
+  Grid2X2,
+  List,
+} from "lucide-react";
 import { toast } from "sonner";
 import nacl from "tweetnacl";
 import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from "bip39";
@@ -36,16 +45,18 @@ const WalletGenerator: React.FC = () => {
   const [seed, setSeed] = useState<string>("");
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [showMnemonic, setShowMnemonic] = useState<boolean>(false);
-  const [showPrivateKeys, setShowPrivateKeys] = useState<boolean>(false);
   const [mnemonicInput, setMnemonicInput] = useState<string>("");
-  const [showStoredMnemonics, setShowStoredMnemonics] =
-    useState<boolean>(false);
+  const [visiblePrivateKeys, setVisiblePrivateKeys] = useState<boolean[]>([]);
+  const [visiblePhrases, setVisiblePhrases] = useState<boolean[]>([]);
+  const [gridView, setGridView] = useState<boolean>(false);
 
   useEffect(() => {
     // Retrieve wallets from local storage on component mount
     const storedWallets = localStorage.getItem("wallets");
     if (storedWallets) {
       setWallets(JSON.parse(storedWallets));
+      setVisiblePrivateKeys(JSON.parse(storedWallets).map(() => false));
+      setVisiblePhrases(JSON.parse(storedWallets).map(() => false));
     }
   }, []);
 
@@ -87,21 +98,46 @@ const WalletGenerator: React.FC = () => {
       const updatedWallets = [...wallets, newWallet];
       setWallets(updatedWallets);
       localStorage.setItem("wallets", JSON.stringify(updatedWallets));
-      toast.success("Wallet generated successfully.");
+      setVisiblePrivateKeys([...visiblePrivateKeys, false]);
+      setVisiblePhrases([...visiblePhrases, false]);
+      toast.success("Wallet generated successfully!");
     } catch (error) {
       toast.error("Failed to generate wallet. Please try again.");
     }
   };
 
+  const handleDeleteWallet = (index: number) => {
+    const updatedWallets = wallets.filter((_, i) => i !== index);
+    setWallets(updatedWallets);
+    localStorage.setItem("wallets", JSON.stringify(updatedWallets));
+    setVisiblePrivateKeys(visiblePrivateKeys.filter((_, i) => i !== index));
+    setVisiblePhrases(visiblePhrases.filter((_, i) => i !== index));
+    toast.success("Wallet deleted successfully!");
+  };
+
   const handleClearWallets = () => {
     localStorage.removeItem("wallets");
     setWallets([]);
+    setVisiblePrivateKeys([]);
+    setVisiblePhrases([]);
     toast.success("All wallets cleared.");
   };
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
     toast.success("Copied to clipboard!");
+  };
+
+  const togglePrivateKeyVisibility = (index: number) => {
+    setVisiblePrivateKeys(
+      visiblePrivateKeys.map((visible, i) => (i === index ? !visible : visible))
+    );
+  };
+
+  const togglePhraseVisibility = (index: number) => {
+    setVisiblePhrases(
+      visiblePhrases.map((visible, i) => (i === index ? !visible : visible))
+    );
   };
 
   return (
@@ -115,11 +151,11 @@ const WalletGenerator: React.FC = () => {
           ease: "easeInOut",
         }}
       >
-        <div className="flex flex-col gap-2">
-          <h1 className="tracking-tighter text-5xl font-extrabold text-primary">
-            Projekt-Kosh
+        <div className="flex flex-col gap-4">
+          <h1 className="tracking-tighter text-5xl md:text-7xl font-extrabold text-primary">
+            Kosh
           </h1>
-          <span className="text-lg tracking-tight text-primary/75 font-medium">
+          <span className="text-lg xl:text-xl tracking-tight text-primary/75 font-medium">
             A personal web-3 wallet for{" "}
             <Link
               href={"https://x.com/kirat_tw"}
@@ -130,15 +166,17 @@ const WalletGenerator: React.FC = () => {
             cohort 3.0 assignment.
           </span>
         </div>
-        <div className="flex flex-col md:flex-row gap-4 mt-6">
+        <div className="flex flex-col md:flex-row gap-4">
           <Input
             type="password"
-            placeholder="Enter Your Recovery Phrase (or leave blank to generate)"
+            placeholder="Enter your secret phrase (or leave blank to generate)"
             onChange={(e) => setMnemonicInput(e.target.value)}
             value={mnemonicInput}
           />
           <Button onClick={() => handleGenerateWallet()}>
-            Generate Wallet
+            {wallets.length > 0 || mnemonicInput
+              ? "Add Wallet"
+              : "Generate Wallet"}
           </Button>
         </div>
       </motion.div>
@@ -147,14 +185,13 @@ const WalletGenerator: React.FC = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
-            delay: 0.3,
             duration: 0.3,
             ease: "easeInOut",
           }}
           className="group flex flex-col items-center gap-4 cursor-pointer rounded-lg border border-primary/10 p-8"
         >
           <div className="flex w-full justify-between items-center">
-            <h2 className="text-xl md:text-3xl font-bold tracking-tighter">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tighter">
               Current Secret Phrase
             </h2>
             <Button
@@ -212,138 +249,171 @@ const WalletGenerator: React.FC = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
+            delay: 0.3,
             duration: 0.3,
             ease: "easeInOut",
           }}
           className="flex flex-col gap-8 mt-6"
         >
-          <div className="flex flex-col md:flex-row justify-between md:items-center">
-            <h3 className="text-xl md:text-3xl font-bold tracking-tighter">
-              {" "}
-              Existing Wallets
-            </h3>
-            <div className="flex items-center gap-2 w-full flex-wrap">
-              <Button
-                variant="outline"
-                size={"sm"}
-                onClick={() => setShowPrivateKeys(!showPrivateKeys)}
-                className="flex gap-2 items-center"
-              >
-                {showPrivateKeys ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-                {showPrivateKeys ? "Hide Private Key" : "Show Private Key"}
-              </Button>
-              <Button
-                variant="outline"
-                size={"sm"}
-                onClick={() => setShowStoredMnemonics(!showStoredMnemonics)}
-                className="flex gap-2 items-center"
-              >
-                {showStoredMnemonics ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-                {showStoredMnemonics ? "Hide Phrases" : "Show Phrases"}
-              </Button>
-
+          <div className="flex md:flex-row justify-between w-full gap-4 items-center">
+            <h2 className="tracking-tighter text-3xl md:text-4xl font-extrabold">
+              Vault
+            </h2>
+            <div className="flex gap-2">
+              {wallets.length > 1 && (
+                <Button
+                  variant={"ghost"}
+                  onClick={() => setGridView(!gridView)}
+                  className="hidden md:block"
+                >
+                  {gridView ? <Grid2X2 /> : <List />}
+                </Button>
+              )}
               <AlertDialog>
-                <AlertDialogTrigger>
-                  <Button
-                    variant={"destructive"}
-                    size={"sm"}
-                    className="flex gap-2 items-center"
-                  >
-                    {" "}
-                    <Trash className="size-4" /> Clear Wallets
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="self-end">
+                    Clear Wallets
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      Are you absolutely sure?
+                      Are you sure you want to delete all wallets?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       This action cannot be undone. This will permanently delete
-                      your saved wallets.
+                      your wallets and keys from local storage.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleClearWallets()}
-                      className="bg-red-950 text-white"
-                    >
-                      Continue
+                    <AlertDialogAction onClick={() => handleClearWallets()}>
+                      Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
           </div>
-          {wallets.map((wallet, index) => (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
-              key={index}
-              className="group flex flex-col gap-8 rounded-lg border border-primary/10 p-8"
-            >
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl md:text-2xl font-bold tracking-tighter">
+          <div
+            className={`grid gap-6 grid-cols-1  ${
+              gridView ? "md:grid-cols-2 lg:grid-cols-3" : ""
+            }`}
+          >
+            {wallets.map((wallet, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: 0.3 + index * 0.1,
+                  duration: 0.3,
+                  ease: "easeInOut",
+                }}
+                className="flex flex-col rounded-2xl border border-primary/10"
+              >
+                <div className="flex justify-between px-8 py-6">
+                  <h3 className="font-bold text-2xl md:text-3xl tracking-tighter ">
                     Wallet {index + 1}
                   </h3>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="flex gap-2 items-center"
+                      >
+                        <Trash className="size-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you sure you want to delete all wallets?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete your wallets and keys from local storage.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteWallet(index)}
+                          className="text-destructive"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-5 px-8 py-4 rounded-2xl bg-primary/10">
                   <div
+                    className="flex flex-col w-full"
                     onClick={() => copyToClipboard(wallet.publicKey)}
-                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
                   >
-                    <h5 className="tracking-tight font-semibold">Public:</h5>
-                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
-                      <p className="truncate">{wallet.publicKey}</p>
-                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
-                    </div>
+                    <span className="text-lg md:text-xl font-bold tracking-tighter">
+                      Public Key
+                    </span>
+                    <p className="break-all text-primary/60 font-light cursor-pointer hover:text-primary transition-all duration-300 truncate">
+                      {wallet.publicKey}
+                    </p>
                   </div>
-                  <div
-                    onClick={() => copyToClipboard(wallet.privateKey)}
-                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
-                  >
-                    <h5 className="tracking-tight font-semibold">Private:</h5>
-                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
-                      <p className="truncate">
-                        {showPrivateKeys
+                  <div className="flex flex-col w-full">
+                    <span className="text-lg md:text-xl font-bold tracking-tighter">
+                      Private Key
+                    </span>
+                    <div className="flex justify-between w-full items-center gap-2">
+                      <p
+                        onClick={() => copyToClipboard(wallet.privateKey)}
+                        className="break-all text-primary/60 font-light cursor-pointer hover:text-primary transition-all duration-300 truncate"
+                      >
+                        {visiblePrivateKeys[index]
                           ? wallet.privateKey
-                          : "•".repeat(wallet.privateKey.length)}
+                          : "•".repeat(wallet.mnemonic.length)}
                       </p>
-                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+                      <Button
+                        variant="ghost"
+                        onClick={() => togglePrivateKeyVisibility(index)}
+                      >
+                        {visiblePrivateKeys[index] ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
-                  <div
-                    onClick={() => copyToClipboard(wallet.mnemonic)}
-                    className="flex flex-col md:flex-row w-full gap-2 cursor-pointer transition-all duration-300 group"
-                  >
-                    <h5 className="tracking-tight font-semibold">Phrases:</h5>
-                    <div className="w-full flex justify-between text-primary/60 hover:text-primary items-center gap-4">
-                      <p className="truncate">
-                        {showStoredMnemonics
+                  <div className="flex flex-col w-full">
+                    <span className="text-lg md:text-xl font-bold tracking-tighter">
+                      Secret Phrase
+                    </span>
+                    <div className="flex justify-between w-full items-center gap-2">
+                      <p
+                        onClick={() => copyToClipboard(wallet.mnemonic)}
+                        className="break-all text-primary/60 font-light cursor-pointer hover:text-primary transition-all duration-300 truncate"
+                      >
+                        {visiblePhrases[index]
                           ? wallet.mnemonic
                           : "•".repeat(wallet.mnemonic.length)}
                       </p>
-                      <Copy className="hidden md:flex size-4 opacity-0 transition-all duration-300 group-hover:opacity-100" />
+
+                      <Button
+                        variant="ghost"
+                        onClick={() => togglePhraseVisibility(index)}
+                      >
+                        {visiblePhrases[index] ? (
+                          <EyeOff className="size-4" />
+                        ) : (
+                          <Eye className="size-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       )}
     </div>

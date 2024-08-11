@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.className} px-4`}>
+      <body className={`${manrope.className}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
