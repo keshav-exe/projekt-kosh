@@ -328,7 +328,7 @@ const WalletGenerator: React.FC = () => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Are you sure you want to delete all wallets?
+                          Are you sure you want to delete Wallet {index+1}?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
