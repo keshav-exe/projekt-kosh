@@ -382,7 +382,7 @@ const WalletGenerator = () => {
           }}
           className="flex flex-col gap-8 mt-6"
         >
-          <div className="flex md:flex-row flex-col justify-between w-full gap-4 items-center">
+          <div className="flex md:flex-row flex-col justify-between w-full gap-4 md:items-center">
             <h2 className="tracking-tighter text-3xl md:text-4xl font-extrabold">
               {pathTypeName} Wallet
             </h2>
@@ -512,7 +512,7 @@ const WalletGenerator = () => {
                       </Button>
                     </div>
                   </div>
-                  <div className="flex flex-col w-full gap-2">
+                  {/* <div className="flex flex-col w-full gap-2">
                     <span className="text-lg md:text-xl font-bold tracking-tighter">
                       Secret Phrase
                     </span>
@@ -537,7 +537,7 @@ const WalletGenerator = () => {
                         )}
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </motion.div>
             ))}
