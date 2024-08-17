@@ -386,9 +386,9 @@ const WalletGenerator = () => {
           }}
           className="flex flex-col gap-8 mt-6"
         >
-          <div className="flex md:flex-row justify-between w-full gap-4 items-center">
+          <div className="flex md:flex-row flex-col justify-between w-full gap-4 items-center">
             <h2 className="tracking-tighter text-3xl md:text-4xl font-extrabold">
-              {pathTypeName} Vault
+              {pathTypeName} Wallet
             </h2>
             <div className="flex gap-2">
               {wallets.length > 1 && (
