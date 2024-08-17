@@ -61,6 +61,7 @@ const WalletGenerator = () => {
     const storedWallets = localStorage.getItem("wallets");
     const storedMnemonic = localStorage.getItem("mnemonics");
     const storedPathTypes = localStorage.getItem("paths");
+
     if (storedWallets && storedMnemonic && storedPathTypes) {
       setMnemonicWords(JSON.parse(storedMnemonic));
       setWallets(JSON.parse(storedWallets));
@@ -178,15 +179,10 @@ const WalletGenerator = () => {
     );
     if (wallet) {
       const updatedWallets = [...wallets, wallet];
-      const updatedMnemonicWords = [...mnemonicWords, mnemonic];
-      const updatedPathType = [...pathTypes, pathTypes];
       setWallets(updatedWallets);
       localStorage.setItem("wallets", JSON.stringify(updatedWallets));
-      localStorage.setItem("pathTypes", JSON.stringify(updatedPathType));
-      localStorage.setItem(
-        "mnemonicWords",
-        JSON.stringify(updatedMnemonicWords)
-      );
+      localStorage.setItem("mnemonics", JSON.stringify(words));
+      localStorage.setItem("paths", JSON.stringify(pathTypes));
       setVisiblePrivateKeys([...visiblePrivateKeys, false]);
       setVisiblePhrases([...visiblePhrases, false]);
       toast.success("Wallet generated successfully!");
