@@ -39,11 +39,16 @@ interface Wallet {
   path: string;
 }
 
-const WalletGenerator = () => {
-  const [mnemonicWords, setMnemonicWords] = useState<string[]>(
-    Array(12).fill(" ")
-  );
-  const [pathTypes, setPathTypes] = useState<string[]>([]);
+const WalletGenerator = ({ pathTypes, setPathTypes, activeIndex } : {
+  pathTypes: string[],
+  setPathTypes: (value: string[]) => void,
+  activeIndex: number
+}) => {
+  const [mnemonicWords, setMnemonicWords] = useState<{ [key: string] : string[] }>({
+    "501": Array(12).fill(" "),
+    "60": Array(12).fill(" ")
+  });
+  const [completeWallets, setCompleteWallets] = useState<Wallet[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [showMnemonic, setShowMnemonic] = useState<boolean>(false);
   const [mnemonicInput, setMnemonicInput] = useState<string>("");
@@ -55,45 +60,69 @@ const WalletGenerator = () => {
     "60": "Ethereum",
   };
 
-  const pathTypeName = pathTypeNames[pathTypes[0]] || "";
+  const typeNumber: string = activeIndex === 0 ? "501" : "60"
+  const pathTypeName = pathTypeNames[typeNumber] || "";
 
   useEffect(() => {
     const storedWallets = localStorage.getItem("wallets");
+    const storedCompleteWallets = localStorage.getItem("completeWallets");
     const storedMnemonic = localStorage.getItem("mnemonics");
     const storedPathTypes = localStorage.getItem("paths");
 
     if (storedWallets && storedMnemonic && storedPathTypes) {
       setMnemonicWords(JSON.parse(storedMnemonic));
       setWallets(JSON.parse(storedWallets));
+      setCompleteWallets(JSON.parse(storedCompleteWallets || "[]"));
       setPathTypes(JSON.parse(storedPathTypes));
       setVisiblePrivateKeys(JSON.parse(storedWallets).map(() => false));
       setVisiblePhrases(JSON.parse(storedWallets).map(() => false));
     }
   }, []);
 
-  const handleDeleteWallet = (index: number) => {
+  useEffect(() => {
+    const typeNumber: string = activeIndex === 0 ? "501" : "60"
+    const extractedWallets: Wallet[] = completeWallets?.filter(wall => wall?.path?.includes(`/${typeNumber}'`))
+    setWallets(extractedWallets)
+  }, [activeIndex])
+
+  const handleDeleteWallet = (index: number, pubKey: string) => {
     const updatedWallets = wallets.filter((_, i) => i !== index);
-    const updatedPathTypes = pathTypes.filter((_, i) => i !== index);
+    // const updatedPathTypes = pathTypes.filter((_, i) => i !== index);
+    const updatedCompleteWallets = completeWallets?.filter(wall => wall?.publicKey !== pubKey)
 
     setWallets(updatedWallets);
-    setPathTypes(updatedPathTypes);
+    setCompleteWallets(updatedCompleteWallets);
+    // setPathTypes(updatedPathTypes);
     localStorage.setItem("wallets", JSON.stringify(updatedWallets));
-    localStorage.setItem("paths", JSON.stringify(updatedPathTypes));
+    localStorage.setItem("completeWallets", JSON.stringify(updatedCompleteWallets));
+    // localStorage.setItem("paths", JSON.stringify(updatedPathTypes));
     setVisiblePrivateKeys(visiblePrivateKeys.filter((_, i) => i !== index));
     setVisiblePhrases(visiblePhrases.filter((_, i) => i !== index));
     toast.success("Wallet deleted successfully!");
   };
 
   const handleClearWallets = () => {
+    const typeNumber: string = activeIndex === 0 ? "501" : "60"
+
+    const extractedWallets: Wallet[] = completeWallets?.filter(wall => !wall?.path?.includes(`/${typeNumber}'`))
+    localStorage.setItem("completeWallets", JSON.stringify(extractedWallets));
     localStorage.removeItem("wallets");
-    localStorage.removeItem("mnemonics");
-    localStorage.removeItem("paths");
+
+    const { [typeNumber]: _, ...newMnemonics } = mnemonicWords
+    localStorage.setItem("mnemonics", JSON.stringify(newMnemonics))
+    
+    const newPaths = pathTypes.filter(path => path !== typeNumber)
+    localStorage.setItem("paths", JSON.stringify(newPaths));
+    setCompleteWallets(extractedWallets)
     setWallets([]);
-    setMnemonicWords([]);
-    setPathTypes([]);
+    setMnemonicWords({
+      ...mnemonicWords,
+      [typeNumber]: Array(12).fill(" ")
+    });
+    setPathTypes(newPaths);
     setVisiblePrivateKeys([]);
     setVisiblePhrases([]);
-    toast.success("All wallets cleared.");
+    toast.success(`All ${pathTypeNames[typeNumber]} wallets cleared.`);
   };
 
   const copyToClipboard = (content: string) => {
@@ -157,6 +186,31 @@ const WalletGenerator = () => {
     }
   };
 
+  useEffect(() => {
+    const typeNumber: string = activeIndex === 0 ? "501" : "60"
+
+    if (mnemonicWords[typeNumber][0]?.trim() !== "") {
+      const wallet = generateWalletFromMnemonic(
+        typeNumber,
+        mnemonicWords[typeNumber]?.join(" "),
+        wallets.length
+      );
+      if (wallet) {
+        const updatedWallets = [...wallets, wallet];
+        const updatedCompleteWallets = [...completeWallets, wallet]
+        setWallets(updatedWallets);
+        setCompleteWallets(updatedCompleteWallets);
+        localStorage.setItem("wallets", JSON.stringify(updatedWallets));
+        localStorage.setItem("completeWallets", JSON.stringify(updatedCompleteWallets));
+        localStorage.setItem("mnemonics", JSON.stringify(mnemonicWords));
+        localStorage.setItem("paths", JSON.stringify(pathTypes));
+        setVisiblePrivateKeys([...visiblePrivateKeys, false]);
+        setVisiblePhrases([...visiblePhrases, false]);
+        toast.success("Wallet generated successfully!");
+      }
+    }
+  }, [mnemonicWords])
+
   const handleGenerateWallet = () => {
     let mnemonic = mnemonicInput.trim();
 
@@ -170,23 +224,13 @@ const WalletGenerator = () => {
     }
 
     const words = mnemonic.split(" ");
-    setMnemonicWords(words);
+    const typeNumber: string = activeIndex === 0 ? "501" : "60"
 
-    const wallet = generateWalletFromMnemonic(
-      pathTypes[0],
-      mnemonic,
-      wallets.length
-    );
-    if (wallet) {
-      const updatedWallets = [...wallets, wallet];
-      setWallets(updatedWallets);
-      localStorage.setItem("wallets", JSON.stringify(updatedWallets));
-      localStorage.setItem("mnemonics", JSON.stringify(words));
-      localStorage.setItem("paths", JSON.stringify(pathTypes));
-      setVisiblePrivateKeys([...visiblePrivateKeys, false]);
-      setVisiblePhrases([...visiblePhrases, false]);
-      toast.success("Wallet generated successfully!");
-    }
+    
+    setMnemonicWords({
+      ...mnemonicWords,
+      [typeNumber]: words
+    });
   };
 
   const handleAddWallet = () => {
@@ -195,17 +239,22 @@ const WalletGenerator = () => {
       return;
     }
 
+    const typeNumber: string = activeIndex === 0 ? "501" : "60"
+
     const wallet = generateWalletFromMnemonic(
-      pathTypes[0],
-      mnemonicWords.join(" "),
+      typeNumber,
+      mnemonicWords[typeNumber]?.join(" "),
       wallets.length
     );
     if (wallet) {
       const updatedWallets = [...wallets, wallet];
-      const updatedPathType = [pathTypes, pathTypes];
+      const updatedCompleteWallets = [...completeWallets, wallet];
+      // const updatedPathType = [pathTypes, pathTypes];
       setWallets(updatedWallets);
+      setCompleteWallets(updatedCompleteWallets);
       localStorage.setItem("wallets", JSON.stringify(updatedWallets));
-      localStorage.setItem("pathTypes", JSON.stringify(updatedPathType));
+      localStorage.setItem("completeWallets", JSON.stringify(updatedCompleteWallets));
+      localStorage.setItem("pathTypes", JSON.stringify(pathTypes));
       setVisiblePrivateKeys([...visiblePrivateKeys, false]);
       setVisiblePhrases([...visiblePhrases, false]);
       toast.success("Wallet generated successfully!");
@@ -342,7 +391,7 @@ const WalletGenerator = () => {
                 ease: "easeInOut",
               }}
               className="flex flex-col w-full items-center justify-center"
-              onClick={() => copyToClipboard(mnemonicWords.join(" "))}
+              onClick={() => copyToClipboard(mnemonicWords[activeIndex === 0 ? "501" : "60"]?.join(" "))}
             >
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -353,7 +402,7 @@ const WalletGenerator = () => {
                 }}
                 className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 justify-center w-full items-center mx-auto my-8"
               >
-                {mnemonicWords.map((word, index) => (
+                {mnemonicWords[activeIndex === 0 ? "501" : "60"]?.map((word, index) => (
                   <p
                     key={index}
                     className="md:text-lg bg-foreground/5 hover:bg-foreground/10 transition-all duration-300 rounded-lg p-4"
@@ -456,17 +505,17 @@ const WalletGenerator = () => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Are you sure you want to delete all wallets?
+                          {`Are you sure you want to delete Wallet ${index+1}?`}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           This action cannot be undone. This will permanently
-                          delete your wallets and keys from local storage.
+                          delete your wallet and keys from local storage.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => handleDeleteWallet(index)}
+                          onClick={() => handleDeleteWallet(index, wallet?.publicKey)}
                           className="text-destructive"
                         >
                           Delete
