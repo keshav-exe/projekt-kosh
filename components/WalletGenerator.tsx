@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
+import { FaEthereum } from "react-icons/fa"; 
 import { toast } from "sonner";
 import nacl from "tweetnacl";
 import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from "bip39";
@@ -31,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
+import { NeonGradientCard } from "./ui/neon-gradient-card";
 
 interface Wallet {
   publicKey: string;
@@ -232,14 +234,16 @@ const WalletGenerator = () => {
                   duration: 0.3,
                   ease: "easeInOut",
                 }}
-                className="flex gap-4 flex-col my-12"
+                className="flex gap-4 flex-col my-10"
               >
-                <div className="flex flex-col gap-2">
+                
+                <NeonGradientCard>
+                <div className="flex flex-col gap-2 ">
                   <h1 className="tracking-tighter text-4xl md:text-5xl font-black">
-                    Kosh supports multiple blockchains
+                  Kosh supports multiple blockchains 
                   </h1>
                   <p className="text-primary/80 font-semibold text-lg md:text-xl">
-                    Choose a blockchain to get started.
+                   Choose a blockchain to get started.
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -251,7 +255,16 @@ const WalletGenerator = () => {
                         "Wallet selected. Please generate a wallet to continue."
                       );
                     }}
-                  >
+                    className="rounded-full mt-2 hover:bg-[#cccccc]"
+                  > <div className="flex items-center space-x-4 z-10">
+                <img 
+                src="https://cdn-icons-png.flaticon.com/128/14446/14446238.png" 
+                alt="Solana" 
+                className="w-6 mr-2" 
+              />
+
+
+                  </div>
                     Solana
                   </Button>
                   <Button
@@ -262,10 +275,15 @@ const WalletGenerator = () => {
                         "Wallet selected. Please generate a wallet to continue."
                       );
                     }}
+                    className="rounded-full mt-2 hover:bg-[#cccccc]"
                   >
+                    <div className="flex items-center space-x-4 z-10">
+                    <FaEthereum className="text-2xl mr-2"/> 
+                    </div>
                     Ethereum
                   </Button>
                 </div>
+                </NeonGradientCard>
               </motion.div>
             )}
             {pathTypes.length !== 0 && (
@@ -293,7 +311,8 @@ const WalletGenerator = () => {
                     onChange={(e) => setMnemonicInput(e.target.value)}
                     value={mnemonicInput}
                   />
-                  <Button size={"lg"} onClick={() => handleGenerateWallet()}>
+                  <Button size={"lg"} onClick={() => handleGenerateWallet()}
+                       className="rounded-full">
                     {mnemonicInput ? "Add Wallet" : "Generate Wallet"}
                   </Button>
                 </div>
@@ -303,7 +322,6 @@ const WalletGenerator = () => {
         </motion.div>
       )}
 
-      {/* Display Secret Phrase */}
       {mnemonicWords && wallets.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -396,10 +414,10 @@ const WalletGenerator = () => {
                   {gridView ? <Grid2X2 /> : <List />}
                 </Button>
               )}
-              <Button onClick={() => handleAddWallet()}>Add Wallet</Button>
+              <Button onClick={() => handleAddWallet()}    className="rounded-full">Add Wallet</Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="self-end">
+                  <Button variant="destructive" className="self-end rounded-full">
                     Clear Wallets
                   </Button>
                 </AlertDialogTrigger>
@@ -414,8 +432,8 @@ const WalletGenerator = () => {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleClearWallets()}>
+                    <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleClearWallets()}    className="rounded-full">
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
